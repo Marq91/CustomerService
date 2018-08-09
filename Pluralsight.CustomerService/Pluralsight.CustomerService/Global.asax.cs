@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Web;
 using System.Web.Http;
 using System.Configuration;
-
+using Microsoft.WindowsAzure.Storage;
 
 namespace Pluralsight.CustomerService
 {
@@ -41,7 +41,8 @@ namespace Pluralsight.CustomerService
                 builder =>
                 {
                     builder.RegisterModule(new AzureModule(Assembly.GetExecutingAssembly()));
-                    var store = new TableBotDataStore(ConfigurationManager.ConnectionString["StorageConnectionString"].ConnectionString);
+                    //var store = new TableBotDataStore(ConfigurationManager.ConnectionString["StorageConnectionString"].ConnectionString);
+                    var store = new TableBotDataStore(CloudStorageAccount.DevelopmentStorageAccount);
                     builder.Register(c => store)
                         .Keyed<IBotDataStore<BotData>>(AzureModule.Key_DataStore)
                         .AsSelf()
