@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Web.Http;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
+using Pluralsight.CustomerService.Dialogs;
+using Pluralsight.CustomerService.Models;
 
 namespace Pluralsight.CustomerService
 {
@@ -17,8 +19,8 @@ namespace Pluralsight.CustomerService
         public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
         {
             if (activity.GetActivityType() == ActivityTypes.Message)
-            {
-                await Conversation.SendAsync(activity, () => new Dialogs.GreetingDialog());
+            {                                          //new Dialogs.GreetingDialog() ...() => Dialogs.MainDialog.dialog
+                await Conversation.SendAsync(activity, MakeLuisDialog);
             }
             else
             {
@@ -26,6 +28,11 @@ namespace Pluralsight.CustomerService
             }
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
+        }
+
+        internal static IDialog<BugReport> MakeLuisDialog()
+        {
+            return Chain.From(() => new LUISDialog(BugReport.BuildForm));
         }
 
         private Activity HandleSystemMessage(Activity message)

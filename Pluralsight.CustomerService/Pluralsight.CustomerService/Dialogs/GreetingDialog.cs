@@ -11,11 +11,13 @@ namespace Pluralsight.CustomerService.Dialogs
     [Serializable]
     public class GreetingDialog : IDialog
     {
-        public Task StartAsync(IDialogContext context)
+        public async Task StartAsync(IDialogContext context)
         {
-            context.PostAsync("Hi I'm Jhon Bot");
+            //Punto debug para el saludo del bot
+            await context.PostAsync("Hola soy Jhon Bot");
+            await Respond(context);
+
             context.Wait(MessageReceivedAsync);
-            return Task.CompletedTask;
         }
 
         //Codigo nuevo, el antiguo sera utilizado***
@@ -24,13 +26,27 @@ namespace Pluralsight.CustomerService.Dialogs
         //    throw new NotImplementedException();
         //}
 
-        //IAwaitable<object>
-        public virtual async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
+        private static async Task Respond(IDialogContext context)
         {
-            var message = await result;
+            var userName = String.Empty;
+            context.UserData.TryGetValue<string>("Name", out userName);
+            if (string.IsNullOrEmpty(userName))
+            {
+                await context.PostAsync("Cual es su nombre?");
+                context.UserData.SetValue<bool>("GetName", true);
+            }
+            else
+            {
+                await context.PostAsync(String.Format("Hola {0}. Como puedo ayudarte hoy?", userName));
+            }
+        }
+
+        //IAwaitable<object> ....virtual
+        public async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> argument)
+        {
+            var message = await argument;
             var userName = String.Empty;
             var getName = false;
-
             context.UserData.TryGetValue<string>("Name", out userName);
             context.UserData.TryGetValue<bool>("GetName", out getName);
 
@@ -39,18 +55,14 @@ namespace Pluralsight.CustomerService.Dialogs
                 userName = message.Text;
                 context.UserData.SetValue<string>("Name", userName);
                 context.UserData.SetValue<bool>("GetName", false);
-            }
-
-            if (string.IsNullOrEmpty(userName))
-            {
-                await context.PostAsync("What is your name?");
-                context.UserData.SetValue<bool>("GetName", true);
+                await Respond(context);
+                context.Wait(MessageReceivedAsync);
             }
             else
             {
-                await context.PostAsync(String.Format("Hi {0}. Howcan I help you today?", userName));
+                context.Done(message);
             }
-            context.Wait(MessageReceivedAsync);
+            
         }   //context.Wait(MessageReceivedAsync); //podria ir aqui
 
     }
